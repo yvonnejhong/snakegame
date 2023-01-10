@@ -26,13 +26,13 @@ export default class Snake extends Phaser.GameObjects.Container {
     super(scene, x, y)
     this.cursors = scene.input.keyboard.createCursorKeys()
 
-    this.snakeLength = 10
+    this.snakeLength = 20
 
     this.snakeBody = []
 
     for(var i=this.snakeLength-1; i>=0; i--)
     {
-      const oneBody = scene.add.circle(x+i*20, y+i*20, 15, 0x00ff00)
+      const oneBody = scene.add.circle(x, y, 15, 0x00ff00)
       oneBody.lastXs = []
       oneBody.lastYs = []
       this.snakeBody.push(oneBody)
@@ -47,6 +47,7 @@ export default class Snake extends Phaser.GameObjects.Container {
     this.frameCount = 1
 
     body.setVelocity(100, 100)
+    
 
 
   }
@@ -55,23 +56,37 @@ export default class Snake extends Phaser.GameObjects.Container {
   {
 
 
+    const width = this.scene.scale.width
+    const height = this.scene.scale.height
     const body = this.body as Phaser.Physics.Arcade.Body
+    const pointer = this.scene.input.mousePointer
+    const vec = new Phaser.Math.Vector2(pointer.x - width / 2, pointer.y - height / 2)
+
+    const angle = vec.angle()
+    var velocity = 100
+    
+    if (pointer.isDown)
+    {
+      velocity = 300
+    }
+
+    body.setVelocity(velocity*Math.cos(angle), velocity*Math.sin(angle))
 
     if (this.cursors.right?.isDown)
     {
-      body.setVelocity(100, 0)
+      body.setVelocity(velocity, 0)
     }
     else if (this.cursors.down?.isDown)
     {
-      body.setVelocity(0, 100)
+      body.setVelocity(0, velocity)
     }
     else if (this.cursors.up?.isDown)
     {
-      body.setVelocity(0, -100)
+      body.setVelocity(0, -velocity)
     }
     else if (this.cursors.left?.isDown)
     {
-      body.setVelocity(-100, 0)
+      body.setVelocity(-velocity, 0)
     }
     else if (this.cursors.space?.isDown)
     {
@@ -101,7 +116,6 @@ export default class Snake extends Phaser.GameObjects.Container {
       
     for(var i=this.snakeBody.length-1; i>=0; i--)
     {
-      console.log('location')
       const bodyPart = this.snakeBody[i] as Phaser.GameObjects.Arc
       if (i == 0)
       {
