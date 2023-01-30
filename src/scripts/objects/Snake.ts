@@ -5,13 +5,11 @@ declare global
     {
         interface Arc
         {
-            lastXs: number[]
-            lastYs: number[]
         }
     }
 }
 
-const REFRESH_RATE = 5
+const REFRESH_RATE = 6
 export default class Snake extends Phaser.GameObjects.Container {
 
 
@@ -21,6 +19,8 @@ export default class Snake extends Phaser.GameObjects.Container {
   private snakeLength: number
   private snakeBody : Phaser.GameObjects.Arc[]
   private frameCount: number
+  private normalVelocityX: number
+  private normalVelocityY: number
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y)
@@ -32,29 +32,26 @@ export default class Snake extends Phaser.GameObjects.Container {
 
     for(var i=this.snakeLength-1; i>=0; i--)
     {
-      const oneBody = scene.add.circle(x, y, 15, 0x00ff00)
-      oneBody.lastXs = []
-      oneBody.lastYs = []
+      const oneBody = scene.add.circle(x, y, 15, 0x00cc00)
+      oneBody.setStrokeStyle(2, 0x00ff00)
+      scene.physics.add.existing(oneBody)
       this.snakeBody.push(oneBody)
     }
-    this.snakeHead = scene.add.circle(x, y, 15, 0xff0000)
-    this.snakeHead.lastXs = []
-    this.snakeHead.lastYs = []
+    this.snakeHead = scene.add.circle(x, y, 15, 0xdd0000)
+    this.snakeHead.setStrokeStyle(3, 0xff0000)
     scene.physics.add.existing(this)
     const body = this.body as Phaser.Physics.Arcade.Body
     body.setSize(this.snakeHead.width, this.snakeHead.height)
-    body.setOffset(this.snakeHead.width*-0.5, this.snakeHead.height*-0.5)
+    //body.setOffset(this.snakeHead.width*-0.5, this.snakeHead.height*-0.5)
     this.frameCount = 1
 
     body.setVelocity(100, 100)
-    
-
-
+    this.normalVelocityX = 100
+    this.normalVelocityY = 100
   }
 
   update(t, dt)
   {
-
 
     const width = this.scene.scale.width
     const height = this.scene.scale.height
@@ -64,13 +61,13 @@ export default class Snake extends Phaser.GameObjects.Container {
 
     const angle = vec.angle()
     var velocity = 100
-    
     if (pointer.isDown)
     {
-      velocity = 300
+      velocity = 200
     }
 
-    body.setVelocity(velocity*Math.cos(angle), velocity*Math.sin(angle))
+    body.setVelocity(velocity*Math.cos(angle),  velocity*Math.sin(angle))
+    
 
     if (this.cursors.right?.isDown)
     {
@@ -95,46 +92,23 @@ export default class Snake extends Phaser.GameObjects.Container {
 
     this.snakeHead.setPosition(body.position.x, body.position.y)
 
-    /*if (this.frameCount > REFRESH_RATE)
-    {
-      console.log('here')
-      this.frameCount = 1
-      this.snakeHead.lastPosition.x = this.snakeHead.x
-      this.snakeHead.lastPosition.y = this.snakeHead.y
-
-      for(var i=this.snakeBody.length-1; i>=0; i--)
-      {
-        const bodyPart = this.snakeBody[i] as Phaser.GameObjects.Arc
-        bodyPart.lastPosition.x = bodyPart.x
-        bodyPart.lastPosition.y = bodyPart.y
-      }
-    }
-    else
-    {
-      this.frameCount ++;
-    }*/
-      
     for(var i=this.snakeBody.length-1; i>=0; i--)
     {
       const bodyPart = this.snakeBody[i] as Phaser.GameObjects.Arc
+      const bodyBody = bodyPart.body as Phaser.Physics.Arcade.Body
       if (i == 0)
       {
-        if (this.snakeHead.lastXs.length > REFRESH_RATE)
-        {
-          bodyPart.setPosition(this.snakeHead.lastXs.shift(), this.snakeHead.lastYs.shift())
-        }
-        this.snakeHead.lastXs.push(this.snakeHead.x)
-        this.snakeHead.lastYs.push(this.snakeHead.y)
+        const vec = new Phaser.Math.Vector2(this.snakeHead.x - bodyPart.x, this.snakeHead.y - bodyPart.y)
+        const theta = vec.angle()
+        bodyBody.setVelocity(velocity * Math.cos(theta), velocity * Math.sin(theta))
+        
       }
       else
       {
         const prevBody = this.snakeBody[i-1] as Phaser.GameObjects.Arc
-        if (prevBody.lastXs.length > REFRESH_RATE)
-        {
-          bodyPart.setPosition(prevBody.lastXs.shift(), prevBody.lastYs.shift())
-        }
-        prevBody.lastXs.push(prevBody.x)
-        prevBody.lastYs.push(prevBody.y)
+        const vec = new Phaser.Math.Vector2(prevBody.x - bodyPart.x, prevBody.y - bodyPart.y)
+        const theta = vec.angle()
+        bodyBody.setVelocity(velocity * Math.cos(theta), velocity * Math.sin(theta))
       }
     }
   }
